@@ -1,0 +1,995 @@
+<title>Unified Production Environment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* ---------- tokens ---------- */
+  :root{
+    --paper:#F2F4F5;
+    --surface:#FFFFFF;
+    --surface-2:#E7EAEC;
+    --surface-3:#DCE1E3;
+    --ink-900:#12181D;
+    --ink-700:#3A454C;
+    --ink-500:#67737B;
+    --ink-400:#8993A0;
+    --line:#D6DBDE;
+    --line-strong:#B7C0C5;
+    --accent:#1C6E8C;
+    --accent-strong:#134F65;
+    --accent-soft:#E3EEF2;
+    --agent:#786829;
+    --agent-soft:#F1ECD9;
+    --good:#2E7D4F;
+    --good-soft:#E3F2E8;
+    --warn:#B0790E;
+    --warn-soft:#FBF0DC;
+    --critical:#B7392A;
+    --critical-soft:#FBE7E4;
+    --shadow:0 1px 2px rgba(18,24,29,.06), 0 10px 28px -14px rgba(18,24,29,.22);
+    --console-bg:#121a1f;
+    --console-fg:#D9E4E8;
+    --console-line:#26333b;
+    --console-dim:#7C8D96;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1418;
+      --surface:#161D22;
+      --surface-2:#1C242A;
+      --surface-3:#232C33;
+      --ink-900:#ECF1F3;
+      --ink-700:#B7C2C7;
+      --ink-500:#8A969C;
+      --ink-400:#6C787E;
+      --line:#29333A;
+      --line-strong:#3A464D;
+      --accent:#5CACCC;
+      --accent-strong:#7EC0DC;
+      --accent-soft:#1C333D;
+      --agent:#C7B168;
+      --agent-soft:#31301C;
+      --good:#57B482;
+      --good-soft:#173023;
+      --warn:#D9A63E;
+      --warn-soft:#332810;
+      --critical:#E0786A;
+      --critical-soft:#33221E;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.6);
+      --console-bg:#0A0F13;
+      --console-fg:#CFE0E6;
+      --console-line:#1C262C;
+      --console-dim:#5C6B72;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1418;
+    --surface:#161D22;
+    --surface-2:#1C242A;
+    --surface-3:#232C33;
+    --ink-900:#ECF1F3;
+    --ink-700:#B7C2C7;
+    --ink-500:#8A969C;
+    --ink-400:#6C787E;
+    --line:#29333A;
+    --line-strong:#3A464D;
+    --accent:#5CACCC;
+    --accent-strong:#7EC0DC;
+    --accent-soft:#1C333D;
+    --agent:#C7B168;
+    --agent-soft:#31301C;
+    --good:#57B482;
+    --good-soft:#173023;
+    --warn:#D9A63E;
+    --warn-soft:#332810;
+    --critical:#E0786A;
+    --critical-soft:#33221E;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.6);
+    --console-bg:#0A0F13;
+    --console-fg:#CFE0E6;
+    --console-line:#1C262C;
+    --console-dim:#5C6B72;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink-900);
+    font-family:'Public Sans', -apple-system, "Segoe UI", sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{
+    font-family:'Big Shoulders Display', 'Arial Narrow', sans-serif;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.01em;
+    text-wrap:balance;
+    margin:0;
+    color:var(--ink-900);
+  }
+  .mono{font-family:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric:tabular-nums;}
+  p{margin:0;}
+  button{font:inherit;}
+  a{color:var(--accent);}
+  ::selection{background:var(--accent-soft); color:var(--ink-900);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
+  }
+
+  /* ---------- app shell ---------- */
+  .app{display:flex; min-height:100vh;}
+
+  .rail{
+    flex:0 0 272px;
+    background:var(--surface);
+    border-right:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    padding:22px 18px;
+    gap:22px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand svg{flex:0 0 auto;}
+  .brand-text{display:flex; flex-direction:column; line-height:1.15;}
+  .brand-text strong{font-family:'Big Shoulders Display',sans-serif; font-weight:800; font-size:19px; letter-spacing:.02em;}
+  .brand-text span{font-size:11px; color:var(--ink-500); letter-spacing:.06em; text-transform:uppercase;}
+
+  .stepper{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  .step{
+    display:flex; align-items:flex-start; gap:11px;
+    width:100%; text-align:left;
+    background:none; border:none; cursor:pointer;
+    padding:9px 8px; border-radius:8px;
+    color:var(--ink-700);
+  }
+  .step:hover{background:var(--surface-2);}
+  .step-num{
+    flex:0 0 26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600;
+    border:1.5px solid var(--line-strong); color:var(--ink-500);
+    background:var(--surface);
+  }
+  .step-body{padding-top:2px;}
+  .step-title{font-size:13.5px; font-weight:600; color:var(--ink-900);}
+  .step-desc{font-size:11.5px; color:var(--ink-500); margin-top:1px;}
+  .step[aria-current="true"]{background:var(--accent-soft);}
+  .step[aria-current="true"] .step-num{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .step[aria-current="true"] .step-title{color:var(--accent-strong);}
+  .step.done .step-num{background:var(--good-soft); border-color:var(--good); color:var(--good);}
+  .step-line{flex:0 0 26px; display:flex; justify-content:center;}
+  .step-line span{width:1.5px; flex:1; background:var(--line); min-height:6px;}
+
+  .rail-footer{
+    margin-top:auto; padding-top:14px; border-top:1px solid var(--line);
+    font-size:11.5px; color:var(--ink-500);
+  }
+  .rail-footer b{color:var(--ink-700);}
+
+  .main{flex:1; min-width:0; display:flex; flex-direction:column;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:16px 32px; border-bottom:1px solid var(--line);
+    background:var(--paper); position:sticky; top:0; z-index:5;
+  }
+  .topbar-title{display:flex; align-items:baseline; gap:10px;}
+  .topbar-title .stage-tag{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); font-weight:600;}
+  .topbar-title h1{font-size:22px;}
+  .project-chip{
+    display:none; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    padding:6px 14px 6px 8px; box-shadow:var(--shadow);
+  }
+  .project-chip.show{display:flex;}
+  .project-chip .dot{width:8px; height:8px; border-radius:50%; background:var(--good);}
+  .project-chip .code{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-500);}
+  .project-chip .name{font-size:13px; font-weight:600;}
+
+  .stage-viewport{padding:32px; flex:1; max-width:1180px; width:100%; margin:0 auto;}
+  .stage{display:none; flex-direction:column; gap:26px;}
+  .stage.active{display:flex;}
+  .stage-intro{max-width:62ch;}
+  .stage-intro .eyebrow{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--accent);
+    text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; display:block;
+  }
+  .stage-intro h2{font-size:32px; margin-bottom:10px;}
+  .stage-intro p{color:var(--ink-700); font-size:15px;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:20px 22px; box-shadow:var(--shadow);
+  }
+  .card h3{font-size:15px; letter-spacing:.02em; margin-bottom:14px; color:var(--ink-700);}
+
+  /* ---------- stage 1: intake ---------- */
+  .dropzone{
+    border:2px dashed var(--line-strong); border-radius:14px;
+    background:var(--surface);
+    padding:38px 30px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .dropzone svg{opacity:.8;}
+  .dropzone h3{font-size:20px; text-transform:none; font-family:'Big Shoulders Display',sans-serif; font-weight:700;}
+  .dropzone p{color:var(--ink-500); font-size:13.5px; max-width:40ch;}
+
+  .filelist{display:flex; flex-direction:column; gap:1px; margin-top:6px;}
+  .file-row{
+    display:grid; grid-template-columns:22px 1fr auto auto; gap:12px; align-items:center;
+    padding:10px 6px; border-bottom:1px solid var(--line);
+  }
+  .file-row:last-child{border-bottom:none;}
+  .file-name{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-900);}
+  .file-meta{font-size:11.5px; color:var(--ink-500); text-align:right; white-space:nowrap;}
+  .file-tag{font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-500); text-align:right;}
+
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:none;
+    border-radius:8px; padding:11px 20px; font-size:13.5px; font-weight:600;
+    letter-spacing:.01em;
+  }
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:hover{background:var(--accent-strong);}
+  .btn-ghost{background:var(--surface-2); color:var(--ink-700); border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--surface-3);}
+  .btn-row{display:flex; gap:10px; align-items:center;}
+
+  /* ---------- stage 2: extraction ---------- */
+  .agent-grid{display:grid; grid-template-columns:1fr 1fr; gap:26px; align-items:start;}
+  .agent-list{display:flex; flex-direction:column; gap:10px;}
+  .agent-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:10px;
+    padding:14px 16px; display:flex; gap:12px; align-items:flex-start;
+  }
+  .agent-icon{
+    flex:0 0 30px; height:30px; border-radius:8px; background:var(--accent-soft);
+    display:flex; align-items:center; justify-content:center; color:var(--accent); font-weight:700;
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+  }
+  .agent-name{font-size:13.5px; font-weight:600;}
+  .agent-desc{font-size:12.5px; color:var(--ink-500); margin-top:2px;}
+  .agent-status{
+    margin-left:auto; flex:0 0 auto; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--good); background:var(--good-soft); padding:3px 9px; border-radius:999px; font-weight:600;
+  }
+
+  .console{
+    background:var(--console-bg); color:var(--console-fg); border-radius:10px;
+    padding:16px 18px; font-family:'IBM Plex Mono',monospace; font-size:12.3px;
+    min-height:280px; max-height:360px; overflow-y:auto;
+    border:1px solid var(--console-line);
+  }
+  .console-line{padding:3px 0; opacity:0; transform:translateY(3px); animation:consoleIn .35s ease forwards;}
+  @keyframes consoleIn{to{opacity:1; transform:none;}}
+  .console-line .tag{color:var(--console-dim);}
+  .console-tag-ingest{color:#7EC0DC;}
+  .console-tag-extract{color:#8FCB9E;}
+  .console-tag-classify{color:#D9C36A;}
+  .console-tag-capability{color:#E0A5D8;}
+
+  /* ---------- stage 3: project profile ---------- */
+  .titleblock{
+    display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--line-strong); border-radius:10px; overflow:hidden;
+  }
+  .tb-cell{padding:14px 16px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:var(--surface);}
+  .tb-cell:nth-child(4n){border-right:none;}
+  .tb-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-500); margin-bottom:5px;}
+  .tb-value{font-size:14.5px; font-weight:600; color:var(--ink-900);}
+  .tb-cell.wide{grid-column:span 2;}
+  .tb-cell.full{grid-column:1 / -1; border-right:none;}
+
+  .badge-agent{
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--agent-soft); color:var(--agent); border-radius:999px;
+    padding:4px 11px; font-size:11px; font-weight:600; letter-spacing:.02em;
+  }
+  .badge-agent::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--agent);}
+
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    border:1px solid var(--line-strong); border-radius:999px; padding:6px 13px;
+    font-size:12.5px; color:var(--ink-700); background:var(--surface-2);
+  }
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+
+  /* ---------- stage 4: graph ---------- */
+  .graph-wrap{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px; box-shadow:var(--shadow);}
+  .graph-wrap svg{width:100%; height:auto; display:block;}
+  figcaption{font-size:12.5px; color:var(--ink-500); padding:10px 14px 4px;}
+  .reason-list{display:flex; flex-direction:column; gap:12px;}
+  .reason{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--line);}
+  .reason:last-child{border-bottom:none;}
+  .reason-mark{flex:0 0 6px; height:6px; border-radius:50%; background:var(--accent); margin-top:7px;}
+  .reason b{color:var(--ink-900);}
+  .reason span{color:var(--ink-700); font-size:13.5px;}
+
+  /* ---------- stage 5: work breakdown ---------- */
+  .wb-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .wb-table th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-500);
+    padding:0 12px 10px; border-bottom:1px solid var(--line-strong); font-weight:600;
+  }
+  .wb-table td{padding:12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .wb-table tr:last-child td{border-bottom:none;}
+  .wb-id{font-family:'IBM Plex Mono',monospace; color:var(--ink-500); font-size:12px;}
+  .wb-name{font-weight:600;}
+  .status-pill{
+    display:inline-block; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;
+    padding:3px 10px; border-radius:999px; font-weight:600; white-space:nowrap;
+  }
+  .status-scheduled{background:var(--accent-soft); color:var(--accent-strong);}
+  .status-notstarted{background:var(--surface-2); color:var(--ink-500); border:1px solid var(--line);}
+  .status-ongoing{background:var(--good-soft); color:var(--good);}
+  .table-scroll{overflow-x:auto;}
+
+  /* ---------- stage 6: provisioning ---------- */
+  .prov-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .prov-card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px 20px;}
+  .prov-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .prov-head h4{font-size:15px; font-family:'Big Shoulders Display',sans-serif; text-transform:none; font-weight:700;}
+  .prov-ok{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--good); font-weight:600; text-transform:uppercase; letter-spacing:.04em;}
+  .prov-ok svg{flex:0 0 auto;}
+  .prov-items{display:flex; flex-direction:column; gap:8px;}
+  .prov-item{display:flex; gap:9px; align-items:flex-start; font-size:13px; color:var(--ink-700);}
+  .prov-item svg{flex:0 0 auto; margin-top:2px; color:var(--good);}
+  .prov-item .mono{color:var(--ink-500); font-size:11.5px; display:block; margin-top:1px;}
+
+  /* ---------- stage 7: dashboard ---------- */
+  .kpi-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:14px;}
+  .kpi{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px 16px 12px; box-shadow:var(--shadow);}
+  .kpi-label{font-size:11px; color:var(--ink-500); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px;}
+  .kpi-value{font-family:'Big Shoulders Display',sans-serif; font-size:28px; font-weight:700; color:var(--ink-900);}
+  .kpi-sub{font-size:11.5px; color:var(--ink-500); margin-top:2px;}
+  .kpi svg{margin-top:8px; display:block;}
+
+  .dash-cols{display:grid; grid-template-columns:1.1fr .9fr; gap:20px; align-items:start;}
+  .wp-mini{display:flex; flex-direction:column;}
+  .wp-mini-row{display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--line); font-size:13px;}
+  .wp-mini-row:last-child{border-bottom:none;}
+  .wp-mini-row .wb-id{flex:0 0 46px;}
+  .wp-mini-row .wb-name{flex:1;}
+
+  .activity-feed{display:flex; flex-direction:column; gap:0;}
+  .activity-row{display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .activity-row:last-child{border-bottom:none;}
+  .activity-time{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-500); flex:0 0 68px; padding-top:1px;}
+  .activity-text{font-size:13px; color:var(--ink-700);}
+  .activity-text b{color:var(--ink-900);}
+
+  .stage-nav{display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid var(--line);}
+
+  @media (max-width: 980px){
+    .app{flex-direction:column;}
+    .rail{position:relative; height:auto; flex-direction:row; align-items:center; overflow-x:auto; width:100%; flex:none;}
+    .stepper{flex-direction:row;}
+    .step-desc{display:none;}
+    .rail-footer{display:none;}
+    .brand{display:none;}
+    .agent-grid, .two-col, .prov-grid, .dash-cols{grid-template-columns:1fr;}
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .titleblock{grid-template-columns:repeat(2,1fr);}
+    .tb-cell:nth-child(4n){border-right:1px solid var(--line);}
+    .tb-cell:nth-child(2n){border-right:none;}
+  }
+</style>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+        <rect x="1" y="1" width="28" height="28" rx="6" fill="var(--accent)"/>
+        <path d="M7 21 L7 13 L15 8 L23 13 L23 21" stroke="#fff" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+        <line x1="15" y1="8" x2="15" y2="21" stroke="#fff" stroke-width="1.6"/>
+        <line x1="7" y1="21" x2="23" y2="21" stroke="#fff" stroke-width="1.6"/>
+      </svg>
+      <div class="brand-text">
+        <strong>UPE</strong>
+        <span>Production&nbsp;Environment</span>
+      </div>
+    </div>
+
+    <ol class="stepper" id="stepper">
+      <li><button class="step" data-target="1" aria-current="true">
+        <span class="step-num">01</span>
+        <span class="step-body"><span class="step-title">Intake</span><span class="step-desc">Tender documents arrive</span></span>
+      </button></li>
+      <li><button class="step" data-target="2">
+        <span class="step-num">02</span>
+        <span class="step-body"><span class="step-title">Extraction</span><span class="step-desc">Agents read &amp; parse</span></span>
+      </button></li>
+      <li><button class="step" data-target="3">
+        <span class="step-num">03</span>
+        <span class="step-body"><span class="step-title">Project Profile</span><span class="step-desc">Identity established</span></span>
+      </button></li>
+      <li><button class="step" data-target="4">
+        <span class="step-num">04</span>
+        <span class="step-body"><span class="step-title">Resourcing</span><span class="step-desc">Knowledge graph match</span></span>
+      </button></li>
+      <li><button class="step" data-target="5">
+        <span class="step-num">05</span>
+        <span class="step-body"><span class="step-title">Work Breakdown</span><span class="step-desc">Scope → work packages</span></span>
+      </button></li>
+      <li><button class="step" data-target="6">
+        <span class="step-num">06</span>
+        <span class="step-body"><span class="step-title">Provisioning</span><span class="step-desc">CDE, DMS, workflows</span></span>
+      </button></li>
+      <li><button class="step" data-target="7">
+        <span class="step-num">07</span>
+        <span class="step-body"><span class="step-title">Live Environment</span><span class="step-desc">The project goes live</span></span>
+      </button></li>
+    </ol>
+
+    <div class="rail-footer">
+      <b>Concept prototype.</b> Walks through one tender — Riverside Bridge Rehabilitation — end to end. All data shown is illustrative.
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title">
+        <span class="stage-tag mono" id="topbarStageTag">STAGE 01/07</span>
+        <h1 id="topbarTitle">Intake</h1>
+      </div>
+      <div class="project-chip" id="projectChip">
+        <span class="dot"></span>
+        <span class="code mono">RIV-BRG-7B</span>
+        <span class="name">Riverside Bridge Rehabilitation</span>
+      </div>
+    </header>
+
+    <div class="stage-viewport">
+
+      <!-- STAGE 1 — INTAKE -->
+      <section class="stage active" data-stage="1">
+        <div class="stage-intro">
+          <span class="eyebrow">Where every project begins</span>
+          <h2>Drop the tender.</h2>
+          <p>The unified production environment starts the moment a bid or tender folder lands. Everything downstream — the project's identity, its staffing, its systems and workflows — is derived from what's inside these files.</p>
+        </div>
+
+        <div class="dropzone">
+          <svg width="46" height="46" viewBox="0 0 46 46" fill="none" aria-hidden="true">
+            <path d="M6 16 L6 36 Q6 38 8 38 L38 38 Q40 38 40 36 L40 18 Q40 16 38 16 L22 16 L19 11 L8 11 Q6 11 6 13 Z" stroke="var(--ink-500)" stroke-width="1.6" fill="var(--surface-2)"/>
+            <path d="M23 22 L23 32 M18 27 L23 22 L28 27" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h3>New_Tender_RIV_BRG_7B/</h3>
+          <p>6 files received — folder queued for agent intake.</p>
+        </div>
+
+        <div class="card">
+          <h3>Folder contents</h3>
+          <div class="filelist mono">
+            <div class="file-row">
+              <span>▤</span>
+              <span class="file-name">RFP_Riverside_Bridge_Pkg7B.pdf</span>
+              <span class="file-tag">Request for Proposal</span>
+              <span class="file-meta">214 pages</span>
+            </div>
+            <div class="file-row">
+              <span>▤</span>
+              <span class="file-name">BOQ_Package7B.xlsx</span>
+              <span class="file-tag">Bill of Quantities</span>
+              <span class="file-meta">1,140 line items</span>
+            </div>
+            <div class="file-row">
+              <span>▤</span>
+              <span class="file-name">Structural_Drawings_Rev3.zip</span>
+              <span class="file-tag">Drawing Set</span>
+              <span class="file-meta">48 sheets</span>
+            </div>
+            <div class="file-row">
+              <span>▤</span>
+              <span class="file-name">Technical_Specifications.docx</span>
+              <span class="file-tag">Specification</span>
+              <span class="file-meta">86 pages</span>
+            </div>
+            <div class="file-row">
+              <span>▤</span>
+              <span class="file-name">Geotechnical_Investigation_Report.pdf</span>
+              <span class="file-tag">Site Investigation</span>
+              <span class="file-meta">62 pages</span>
+            </div>
+            <div class="file-row">
+              <span>▤</span>
+              <span class="file-name">Environmental_Compliance_Memo.pdf</span>
+              <span class="file-tag">Compliance</span>
+              <span class="file-meta">14 pages</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="goToStage(2, {runLog:true})">Run intake agents →</button>
+        </div>
+      </section>
+
+      <!-- STAGE 2 — EXTRACTION -->
+      <section class="stage" data-stage="2">
+        <div class="stage-intro">
+          <span class="eyebrow">A series of agents, in sequence</span>
+          <h2>Agents read the documents.</h2>
+          <p>Four agents run in a pipeline — parsing, extracting, classifying, and cross-referencing every document against the organization's knowledge graph.</p>
+        </div>
+
+        <div class="agent-grid">
+          <div class="agent-list">
+            <div class="agent-card">
+              <span class="agent-icon">01</span>
+              <div>
+                <div class="agent-name">Document Ingestion Agent</div>
+                <div class="agent-desc">OCRs and parses every file — PDF, DOCX, XLSX, and CAD sheet packs — into structured text and drawing indexes.</div>
+              </div>
+              <span class="agent-status">Done</span>
+            </div>
+            <div class="agent-card">
+              <span class="agent-icon">02</span>
+              <div>
+                <div class="agent-name">Entity Extraction Agent</div>
+                <div class="agent-desc">Pulls client, site location, contract value, key dates, and scope narrative out of the parsed text.</div>
+              </div>
+              <span class="agent-status">Done</span>
+            </div>
+            <div class="agent-card">
+              <span class="agent-icon">03</span>
+              <div>
+                <div class="agent-name">Classification &amp; Naming Agent</div>
+                <div class="agent-desc">Determines discipline and delivery method, then applies the org's project naming and coding convention.</div>
+              </div>
+              <span class="agent-status">Done</span>
+            </div>
+            <div class="agent-card">
+              <span class="agent-icon">04</span>
+              <div>
+                <div class="agent-name">Capability Mapping Agent</div>
+                <div class="agent-desc">Cross-references scope against the knowledge graph to flag required capabilities, tools, and candidate people.</div>
+              </div>
+              <span class="agent-status">Done</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="console mono" id="console" aria-live="polite"></div>
+            <div class="btn-row" style="margin-top:10px;">
+              <button class="btn btn-ghost" onclick="runConsole(true)">↻ Replay agent log</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-nav">
+          <button class="btn btn-ghost" onclick="goToStage(1)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStage(3)">Establish project profile →</button>
+        </div>
+      </section>
+
+      <!-- STAGE 3 — PROJECT PROFILE -->
+      <section class="stage" data-stage="3">
+        <div class="stage-intro">
+          <span class="eyebrow">Identity, inferred or adopted</span>
+          <h2>The project takes shape.</h2>
+          <p>If a project name and code are already fixed in the specification, the platform adopts them directly. Here, nothing was specified — so naming and classification are inferred from the tender itself.</p>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+            <h3 style="margin-bottom:0;">Project title block</h3>
+            <span class="badge-agent">Agent-extracted</span>
+          </div>
+          <div class="titleblock">
+            <div class="tb-cell wide">
+              <div class="tb-label">Project Name</div>
+              <div class="tb-value">Riverside Bridge Rehabilitation — Package 7B</div>
+            </div>
+            <div class="tb-cell wide">
+              <div class="tb-label">Project Code</div>
+              <div class="tb-value mono">RIV-BRG-7B-2026</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Client</div>
+              <div class="tb-value">Metro Infrastructure Authority</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Discipline</div>
+              <div class="tb-value">Civil / Structural</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Location</div>
+              <div class="tb-value">Riverside District, Sector 12</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Delivery Method</div>
+              <div class="tb-value">Design–Bid–Build</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Contract Value</div>
+              <div class="tb-value">$24.6M USD</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Duration</div>
+              <div class="tb-value">18 months</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Start</div>
+              <div class="tb-value">Mar 2026</div>
+            </div>
+            <div class="tb-cell">
+              <div class="tb-label">Target Completion</div>
+              <div class="tb-value">Sep 2027</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <h3>Capabilities required</h3>
+            <div class="chip-row">
+              <span class="chip">Structural Engineering</span>
+              <span class="chip">Geotechnical</span>
+              <span class="chip">Marine &amp; Waterway Works</span>
+              <span class="chip">Electrical &amp; Lighting</span>
+              <span class="chip">QA / QC Testing</span>
+              <span class="chip">Environmental Monitoring</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Tools &amp; software required</h3>
+            <div class="chip-row">
+              <span class="chip">Autodesk Construction Cloud</span>
+              <span class="chip">Civil 3D</span>
+              <span class="chip">Primavera P6</span>
+              <span class="chip">ERP Cost Module</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-nav">
+          <button class="btn btn-ghost" onclick="goToStage(2)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStage(4)">Match resources →</button>
+        </div>
+      </section>
+
+      <!-- STAGE 4 — RESOURCING / KNOWLEDGE GRAPH -->
+      <section class="stage" data-stage="4">
+        <div class="stage-intro">
+          <span class="eyebrow">The other path in</span>
+          <h2>The knowledge graph finds its place.</h2>
+          <p>Where naming can't be inferred from the spec alone, the platform reasons over the organization's knowledge graph instead — where the project sits, who's positioned to run it, and what capacity already exists nearby.</p>
+        </div>
+
+        <figure class="graph-wrap">
+          <svg viewBox="0 0 900 440" role="img" aria-label="Knowledge graph showing RIV-BRG-7B connected to the Riverside Regional Office, project manager Sarah Chen, a structural team pool, a geotechnical specialist, the precedent project Elmhurst Overpass, and its software entitlements.">
+            <defs>
+              <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L8,4 L0,8 z" fill="var(--ink-400)"/>
+              </marker>
+            </defs>
+
+            <!-- edges -->
+            <g stroke="var(--ink-400)" stroke-width="1.3" fill="none" marker-end="url(#arrow)">
+              <line x1="450" y1="220" x2="210" y2="100"/>
+              <line x1="450" y1="220" x2="690" y2="100"/>
+              <line x1="450" y1="220" x2="760" y2="220"/>
+              <line x1="450" y1="220" x2="690" y2="345"/>
+              <line x1="450" y1="220" x2="210" y2="345"/>
+              <line x1="450" y1="220" x2="150" y2="220"/>
+            </g>
+
+            <!-- edge labels -->
+            <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="var(--ink-500)">
+              <text x="300" y="150" text-anchor="middle">executed by</text>
+              <text x="600" y="150" text-anchor="middle">matched — PM fit</text>
+              <text x="620" y="212" text-anchor="middle">capability match</text>
+              <text x="605" y="295" text-anchor="middle">capability match</text>
+              <text x="300" y="295" text-anchor="middle">precedent</text>
+              <text x="290" y="212" text-anchor="middle">provisioned via</text>
+            </g>
+
+            <!-- Riverside Regional Office -->
+            <g>
+              <rect x="120" y="66" width="180" height="52" rx="8" fill="var(--surface)" stroke="var(--ink-400)" stroke-width="1.3"/>
+              <text x="210" y="88" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="12" fill="var(--ink-900)">Riverside Regional Office</text>
+              <text x="210" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-500)">org unit</text>
+            </g>
+
+            <!-- Sarah Chen PM -->
+            <g>
+              <circle cx="690" cy="92" r="46" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+              <text x="690" y="86" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="12" fill="var(--ink-900)">Sarah Chen</text>
+              <text x="690" y="101" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-500)">Project Manager</text>
+            </g>
+
+            <!-- Structural team pool -->
+            <g>
+              <rect x="770" y="196" width="120" height="48" rx="8" fill="var(--surface)" stroke="var(--ink-400)" stroke-width="1.3" stroke-dasharray="4 3"/>
+              <text x="830" y="216" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="11.5" fill="var(--ink-900)">Structural Team</text>
+              <text x="830" y="231" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-500)">4 available</text>
+            </g>
+
+            <!-- Geotech specialist -->
+            <g>
+              <circle cx="690" cy="345" r="42" fill="var(--surface)" stroke="var(--ink-400)" stroke-width="1.3" stroke-dasharray="4 3"/>
+              <text x="690" y="340" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="11.5" fill="var(--ink-900)">Geotechnical</text>
+              <text x="690" y="354" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-500)">1 specialist avail.</text>
+            </g>
+
+            <!-- Precedent -->
+            <g>
+              <rect x="130" y="316" width="170" height="52" rx="8" fill="var(--surface)" stroke="var(--ink-400)" stroke-width="1.3"/>
+              <text x="215" y="338" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="12" fill="var(--ink-900)">Elmhurst Overpass</text>
+              <text x="215" y="354" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-500)">precedent · 2024</text>
+            </g>
+
+            <!-- Software entitlement -->
+            <g>
+              <rect x="30" y="196" width="120" height="48" rx="8" fill="var(--surface)" stroke="var(--ink-400)" stroke-width="1.3"/>
+              <text x="90" y="216" text-anchor="middle" font-family="Public Sans" font-weight="600" font-size="11.5" fill="var(--ink-900)">ACC + Civil 3D</text>
+              <text x="90" y="231" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="var(--ink-500)">entitlement</text>
+            </g>
+
+            <!-- center project node -->
+            <g>
+              <circle cx="450" cy="220" r="58" fill="var(--accent)"/>
+              <text x="450" y="215" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="12" fill="#fff">RIV-BRG-7B</text>
+              <text x="450" y="231" text-anchor="middle" font-family="Public Sans" font-size="10" fill="#fff" opacity=".85">this project</text>
+            </g>
+          </svg>
+          <figcaption>How the graph places the project: the region office that runs it, the manager and crews matched to it, the precedent it echoes, and the software already entitled to it.</figcaption>
+        </figure>
+
+        <div class="card">
+          <h3>Why these matches</h3>
+          <div class="reason-list">
+            <div class="reason">
+              <span class="reason-mark"></span>
+              <span><b>Sarah Chen, Project Manager</b> — currently carries 2 active projects with capacity for one more; led the Elmhurst Overpass rehabilitation (comparable scope) in 2024; based 12&nbsp;km from site.</span>
+            </div>
+            <div class="reason">
+              <span class="reason-mark"></span>
+              <span><b>Structural Team, Riverside Regional Office</b> — 4 engineers with bridge rehabilitation experience become available as the Elmhurst Overpass project closes out next month.</span>
+            </div>
+            <div class="reason">
+              <span class="reason-mark"></span>
+              <span><b>Geotechnical specialist</b> — 1 specialist within the region holds current certification for waterway substructure work.</span>
+            </div>
+            <div class="reason">
+              <span class="reason-mark"></span>
+              <span><b>ACC + Civil 3D entitlement</b> — already licensed at the regional office; no new procurement required to provision this project.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-nav">
+          <button class="btn btn-ghost" onclick="goToStage(3)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStage(5)">Break down the work →</button>
+        </div>
+      </section>
+
+      <!-- STAGE 5 — WORK BREAKDOWN -->
+      <section class="stage" data-stage="5">
+        <div class="stage-intro">
+          <span class="eyebrow">Scope, decomposed</span>
+          <h2>The work becomes work packages.</h2>
+          <p>The scope narrative and BOQ are decomposed into work packages, each carrying the capability it needs, the resource assigned to it, and the tool it runs through.</p>
+        </div>
+
+        <div class="card table-scroll">
+          <table class="wb-table">
+            <thead>
+              <tr>
+                <th>WP</th><th>Work Package</th><th>Capability</th><th>Assigned Resource</th><th>Tool</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="wb-id">WP01</td><td class="wb-name">Site Mobilization &amp; Survey</td><td>Surveying</td><td>Field Survey Team</td><td class="mono">Civil 3D</td><td><span class="status-pill status-scheduled">Scheduled</span></td></tr>
+              <tr><td class="wb-id">WP02</td><td class="wb-name">Demolition of Existing Deck</td><td>Structural</td><td>Structural Team A</td><td class="mono">ACC</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+              <tr><td class="wb-id">WP03</td><td class="wb-name">Substructure Repair</td><td>Structural / Geotechnical</td><td>Structural Team A + Geotech</td><td class="mono">Civil 3D</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+              <tr><td class="wb-id">WP04</td><td class="wb-name">Deck Reconstruction</td><td>Structural</td><td>Structural Team B</td><td class="mono">ACC</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+              <tr><td class="wb-id">WP05</td><td class="wb-name">Waterproofing &amp; Drainage</td><td>Civil</td><td>Civil Crew</td><td class="mono">ACC</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+              <tr><td class="wb-id">WP06</td><td class="wb-name">Barrier &amp; Parapet Installation</td><td>Structural</td><td>Structural Team B</td><td class="mono">—</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+              <tr><td class="wb-id">WP07</td><td class="wb-name">Electrical &amp; Lighting</td><td>Electrical</td><td>Electrical Subcontractor</td><td class="mono">—</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+              <tr><td class="wb-id">WP08</td><td class="wb-name">Quality Testing &amp; Commissioning</td><td>QA / QC</td><td>QA/QC Team</td><td class="mono">ERP</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+              <tr><td class="wb-id">WP09</td><td class="wb-name">Environmental Monitoring</td><td>Environmental</td><td>Compliance Officer</td><td class="mono">—</td><td><span class="status-pill status-ongoing">Ongoing</span></td></tr>
+              <tr><td class="wb-id">WP10</td><td class="wb-name">Final Handover &amp; As-Builts</td><td>Documentation</td><td>PM + BIM Coordinator</td><td class="mono">ACC</td><td><span class="status-pill status-notstarted">Not Started</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="stage-nav">
+          <button class="btn btn-ghost" onclick="goToStage(4)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStage(6)">Provision the environment →</button>
+        </div>
+      </section>
+
+      <!-- STAGE 6 — PROVISIONING -->
+      <section class="stage" data-stage="6">
+        <div class="stage-intro">
+          <span class="eyebrow">Set up, not configured by hand</span>
+          <h2>The environment provisions itself.</h2>
+          <p>With identity, resourcing, and scope established, the platform sets up the common data environment, document management, workflows, and software — a data-driven environment, ready before day one.</p>
+        </div>
+
+        <div class="prov-grid">
+          <div class="prov-card">
+            <div class="prov-head"><h4>Common Data Environment</h4><span class="prov-ok"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good)"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.4" fill="none"/></svg>Provisioned</span></div>
+            <div class="prov-items">
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>WIP / Shared / Published / Archive structure created<span class="mono">ISO&nbsp;19650 container model</span></span></div>
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>Naming convention applied to all containers<span class="mono">RIV-BRG-7B-XX-XX-XX</span></span></div>
+            </div>
+          </div>
+
+          <div class="prov-card">
+            <div class="prov-head"><h4>Document Management</h4><span class="prov-ok"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good)"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.4" fill="none"/></svg>Provisioned</span></div>
+            <div class="prov-items">
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>Metadata schema applied<span class="mono">discipline · status · revision</span></span></div>
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>Permission groups created<span class="mono">PM · Engineers · Subcontractors · Client-Read</span></span></div>
+            </div>
+          </div>
+
+          <div class="prov-card">
+            <div class="prov-head"><h4>Workflows</h4><span class="prov-ok"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good)"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.4" fill="none"/></svg>Configured</span></div>
+            <div class="prov-items">
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>Drawing review &amp; approval<span class="mono">3-stage sign-off</span></span></div>
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>RFI, submittal, and change-order tracking enabled</span></div>
+            </div>
+          </div>
+
+          <div class="prov-card">
+            <div class="prov-head"><h4>Software</h4><span class="prov-ok"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good)"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.4" fill="none"/></svg>Provisioned</span></div>
+            <div class="prov-items">
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>ACC project space + Civil 3D template linked</span></div>
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>Primavera P6 shell loaded with 10 work packages</span></div>
+            </div>
+          </div>
+
+          <div class="prov-card" style="grid-column:1/-1;">
+            <div class="prov-head"><h4>Team</h4><span class="prov-ok"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good)"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.4" fill="none"/></svg>Onboarded</span></div>
+            <div class="prov-items">
+              <div class="prov-item"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="7" fill="var(--good-soft)"/><path d="M4 7l2 2 4-4" stroke="var(--good)" stroke-width="1.4" fill="none"/></svg><span>Sarah Chen (PM) and 14 team members added with role-based access · subcontractor guest invites pending</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-nav">
+          <button class="btn btn-ghost" onclick="goToStage(5)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStage(7)">Enter the environment →</button>
+        </div>
+      </section>
+
+      <!-- STAGE 7 — LIVE ENVIRONMENT -->
+      <section class="stage" data-stage="7">
+        <div class="stage-intro">
+          <span class="eyebrow">From tender to production, in one pass</span>
+          <h2>The project goes live.</h2>
+          <p>Nine minutes after the tender folder was dropped, RIV-BRG-7B has an identity, a manager, a team, a work breakdown, and a fully provisioned data environment — live and ready to run.</p>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">Schedule Progress</div>
+            <div class="kpi-value">4%</div>
+            <div class="kpi-sub">Week 1 of 78</div>
+            <svg width="100%" height="30" viewBox="0 0 140 30" preserveAspectRatio="none"><polyline points="0,26 20,25 40,24 60,22 80,20 100,15 120,10 140,6" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="140" cy="6" r="2.6" fill="var(--accent)"/></svg>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Budget Committed</div>
+            <div class="kpi-value">$1.02M</div>
+            <div class="kpi-sub">of $24.6M</div>
+            <svg width="100%" height="30" viewBox="0 0 140 30" preserveAspectRatio="none"><polyline points="0,28 40,27 80,25 140,20" fill="none" stroke="var(--accent)" stroke-width="2"/><circle cx="140" cy="20" r="2.6" fill="var(--accent)"/></svg>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Open RFIs</div>
+            <div class="kpi-value">0</div>
+            <div class="kpi-sub">None raised yet</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Docs Pending Review</div>
+            <div class="kpi-value">3</div>
+            <div class="kpi-sub">Structural drawing set</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Days Without Incident</div>
+            <div class="kpi-value">12</div>
+            <div class="kpi-sub">Since mobilization</div>
+          </div>
+        </div>
+
+        <div class="dash-cols">
+          <div class="card">
+            <h3>Work package snapshot</h3>
+            <div class="wp-mini">
+              <div class="wp-mini-row"><span class="wb-id">WP01</span><span class="wb-name">Site Mobilization &amp; Survey</span><span class="status-pill status-scheduled">Scheduled</span></div>
+              <div class="wp-mini-row"><span class="wb-id">WP02</span><span class="wb-name">Demolition of Existing Deck</span><span class="status-pill status-notstarted">Not Started</span></div>
+              <div class="wp-mini-row"><span class="wb-id">WP03</span><span class="wb-name">Substructure Repair</span><span class="status-pill status-notstarted">Not Started</span></div>
+              <div class="wp-mini-row"><span class="wb-id">WP09</span><span class="wb-name">Environmental Monitoring</span><span class="status-pill status-ongoing">Ongoing</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Recent activity</h3>
+            <div class="activity-feed">
+              <div class="activity-row"><span class="activity-time">09:14</span><span class="activity-text">CDE folder structure <b>created</b> for RIV-BRG-7B</span></div>
+              <div class="activity-row"><span class="activity-time">09:15</span><span class="activity-text"><b>Sarah Chen</b> accepted Project Manager role</span></div>
+              <div class="activity-row"><span class="activity-time">09:16</span><span class="activity-text">Civil 3D template <b>linked</b> to project space</span></div>
+              <div class="activity-row"><span class="activity-time">09:17</span><span class="activity-text"><b>WP01</b> Site Mobilization scheduled for Mar 3</span></div>
+              <div class="activity-row"><span class="activity-time">09:18</span><span class="activity-text">14 team members <b>onboarded</b> with role-based access</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stage-nav">
+          <button class="btn btn-ghost" onclick="goToStage(6)">← Back</button>
+          <button class="btn btn-ghost" onclick="goToStage(1)">↺ Restart walkthrough</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  var stageNames = {1:"Intake",2:"Extraction",3:"Project Profile",4:"Resourcing",5:"Work Breakdown",6:"Provisioning",7:"Live Environment"};
+  var visited = {1:true};
+  var consoleLines = [
+    ["INGEST","OCR complete — 214 pages parsed", "RFP_Riverside_Bridge_Pkg7B.pdf", "console-tag-ingest"],
+    ["INGEST","48 drawing sheets indexed", "Structural_Drawings_Rev3.zip", "console-tag-ingest"],
+    ["INGEST","1,140 BOQ line items structured", "BOQ_Package7B.xlsx", "console-tag-ingest"],
+    ["EXTRACT","Client → Metro Infrastructure Authority", "", "console-tag-extract"],
+    ["EXTRACT","Site location → Riverside District, Sector 12", "", "console-tag-extract"],
+    ["EXTRACT","Contract value → $24.6M USD · Duration → 18 months", "", "console-tag-extract"],
+    ["EXTRACT","Scope → deck, substructure &amp; approach span rehabilitation", "", "console-tag-extract"],
+    ["CLASSIFY","Discipline → Civil / Structural — Bridge Rehabilitation", "", "console-tag-classify"],
+    ["CLASSIFY","Naming convention matched → RIV-BRG-7B-2026", "", "console-tag-classify"],
+    ["CAPABILITY","6 capability domains matched against knowledge graph", "", "console-tag-capability"],
+    ["CAPABILITY","3 software entitlements flagged as already available", "", "console-tag-capability"],
+    ["CAPABILITY","11 candidate personnel identified within 40km radius", "", "console-tag-capability"]
+  ];
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function goToStage(n, opts){
+    opts = opts || {};
+    document.querySelectorAll('.stage').forEach(function(s){
+      s.classList.toggle('active', s.getAttribute('data-stage') == n);
+    });
+    document.querySelectorAll('.step').forEach(function(b){
+      var isCurrent = b.getAttribute('data-target') == n;
+      b.setAttribute('aria-current', isCurrent ? 'true' : 'false');
+      b.classList.toggle('done', visited[b.getAttribute('data-target')] && !isCurrent);
+    });
+    visited[n] = true;
+    document.getElementById('topbarStageTag').textContent = 'STAGE 0' + n + '/07';
+    document.getElementById('topbarTitle').textContent = stageNames[n];
+    if(n >= 3){ document.getElementById('projectChip').classList.add('show'); }
+    document.querySelector('.stage-viewport').scrollTo({top:0, behavior: reduceMotion ? 'auto' : 'smooth'});
+    window.scrollTo({top:0, behavior: reduceMotion ? 'auto' : 'smooth'});
+    if(n == 2 && (opts.runLog || !document.getElementById('console').dataset.ran)){
+      runConsole(false);
+    }
+  }
+
+  function runConsole(forceReplay){
+    var el = document.getElementById('console');
+    el.dataset.ran = "1";
+    el.innerHTML = "";
+    consoleLines.forEach(function(line, i){
+      var row = document.createElement('div');
+      row.className = 'console-line';
+      row.style.animationDelay = reduceMotion ? '0s' : (i * 0.16) + 's';
+      row.innerHTML = '<span class="tag">[<span class="'+line[3]+'">'+line[0]+'</span>]</span> ' + line[1] + (line[2] ? ' <span class="tag">— '+line[2]+'</span>' : '');
+      el.appendChild(row);
+    });
+    el.scrollTop = 0;
+  }
+
+  document.querySelectorAll('.step').forEach(function(btn){
+    btn.addEventListener('click', function(){ goToStage(btn.getAttribute('data-target')); });
+  });
+
+  goToStage(1);
+</script>
