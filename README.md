@@ -17,3 +17,9 @@ Walking through one worked example — a bridge rehabilitation tender — across
 ## Viewing it
 
 Open `index.html` directly in a browser — it's fully self-contained (no build step, no dependencies beyond Google Fonts).
+
+## Kelp Bight
+
+`kelp-bight.html` is a separate, unrelated prototype in this same repo: a browser-based, text-forward survival game set in a fictional off-grid Alaskan fishing settlement. You play a newcomer with one autumn (50 days, 3 action slots each) to get ready for winter — chopping firewood, learning skills from six named residents, and building the kind of standing with them that shows up unasked when a storm takes out your roof. The core thesis: self-sufficiency exists at the settlement level, never the individual level — money is fast and always tempting, but it buys nothing that lasts.
+
+Open `kelp-bight.html` directly in a browser. It's a single self-contained file — React, ReactDOM, and the compiled game code are inlined, and Tailwind's output is precompiled and inlined too, so it needs no build step and no CDN access beyond an optional Google Fonts stylesheet (it falls back to system serif/monospace fonts if that's unreachable). All game state is in-memory only; every tunable number lives in the `BALANCE` object at the top of the script.
